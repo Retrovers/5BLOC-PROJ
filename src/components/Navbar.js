@@ -1,5 +1,3 @@
-import logo from '../logo_3.png';
-import fullLogo from '../full_logo.png';
 import {
   BrowserRouter as Router,
   Switch,
@@ -26,25 +24,9 @@ async function getAddress() {
 }
 
 function updateButton() {
-  const ethereumButton = document.querySelector('.enableEthereumButton');
-  ethereumButton.textContent = "Connected";
-  ethereumButton.classList.remove("hover:bg-blue-70");
-  ethereumButton.classList.remove("bg-blue-500");
-  ethereumButton.classList.add("hover:bg-green-70");
-  ethereumButton.classList.add("bg-green-500");
 }
 
 async function connectWebsite() {
-
-    const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-    if(chainId !== '0x5')
-    {
-      //alert('Incorrect network! Switch your metamask network to Rinkeby');
-      await window.ethereum.request({
-        method: 'wallet_switchEthereumChain',
-        params: [{ chainId: '0x5' }],
-     })
-    }  
     await window.ethereum.request({ method: 'eth_requestAccounts' })
       .then(() => {
         updateButton();
@@ -58,7 +40,6 @@ async function connectWebsite() {
     let val = window.ethereum.isConnected();
     if(val)
     {
-      console.log("here");
       getAddress();
       toggleConnect(val);
       updateButton();
@@ -70,57 +51,38 @@ async function connectWebsite() {
   });
 
     return (
-      <div className="">
-        <nav className="w-screen">
-          <ul className='flex items-end justify-between py-3 bg-transparent text-white pr-5'>
-          <li className='flex items-end ml-5 pb-2'>
-            <Link to="/">
-            <img src={fullLogo} alt="" width={120} height={120} className="inline-block -mt-2"/>
-            <div className='inline-block font-bold text-xl ml-2'>
-              NFT Marketplace
-            </div>
-            </Link>
-          </li>
-          <li className='w-2/6'>
-            <ul className='lg:flex justify-between font-bold mr-10 text-lg'>
-              {location.pathname === "/" ? 
-              <li className='border-b-2 hover:pb-0 p-2'>
-                <Link to="/">Marketplace</Link>
+      <header className="p-3 text-bg-dark">
+        <div className="container">
+          <div className="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start">
+            <a href="/" className="d-flex align-items-center mb-2 mb-lg-0 text-white text-decoration-none" style={{marginRight: '25px'}}>
+              <span className="fs-4">🚂 RailRoad</span>
+            </a>
+            <ul className="nav col-12 col-lg-auto me-lg-auto mb-2 justify-content-center mb-md-0">
+            {location.pathname === "/" ? 
+              <li>
+                <Link to="/" className="nav-link px-2 text-secondary">Boutique</Link>
               </li>
               :
-              <li className='hover:border-b-2 hover:pb-0 p-2'>
-                <Link to="/">Marketplace</Link>
+              <li>
+                <Link to="/" className="nav-link px-2 text-white" disabled={!connected ? 'disabled' : ''}>Boutique</Link>
               </li>              
-              }
-              {location.pathname === "/sellNFT" ? 
-              <li className='border-b-2 hover:pb-0 p-2'>
-                <Link to="/sellNFT">List My NFT</Link>
-              </li>
-              :
-              <li className='hover:border-b-2 hover:pb-0 p-2'>
-                <Link to="/sellNFT">List My NFT</Link>
-              </li>              
-              }              
+              }         
               {location.pathname === "/profile" ? 
-              <li className='border-b-2 hover:pb-0 p-2'>
-                <Link to="/profile">Profile</Link>
+              <li>
+                <Link to="/profile" className="nav-link px-2 text-secondary">Mes achats et mon compte</Link>
               </li>
               :
-              <li className='hover:border-b-2 hover:pb-0 p-2'>
-                <Link to="/profile">Profile</Link>
+              <li>
+                <Link to="/profile" className="nav-link px-2 text-white" disabled={!connected ? 'disabled' : ''}>Mes achats et mon compte</Link>
               </li>              
               }  
-              <li>
-                <button className="enableEthereumButton bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-sm" onClick={connectWebsite}>{connected? "Connected":"Connect Wallet"}</button>
-              </li>
             </ul>
-          </li>
-          </ul>
-        </nav>
-        <div className='text-white text-bold text-right mr-10 text-sm'>
-          {currAddress !== "0x" ? "Connected to":"Not Connected. Please login to view NFTs"} {currAddress !== "0x" ? (currAddress.substring(0,15)+'...'):""}
+            <div className="text-end">
+            <button className="enableEthereumButton btn btn-warning" onClick={connectWebsite} disabled={connected ? 'disabled' : ''}>{connected? "Vous êtes connecté(e) !":"Etablir la connexion avec votre wallet"}</button>
+            </div>
+          </div>
         </div>
-      </div>
+      </header>
     );
   }
 

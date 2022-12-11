@@ -1,97 +1,143 @@
 import Navbar from "./Navbar";
-import { useLocation, useParams } from 'react-router-dom';
-import MarketplaceJSON from "../Marketplace.json";
-import axios from "axios";
-import { useState } from "react";
-import NFTTile from "./NFTTile";
+import NFTRailRoadShopJSON from "../contracts/NFTRailRoadShop.json";
+import ContractAddressJSON from "../contracts/contract-address.json";
+import TokenJSON from "../contracts/Token.json";
+import TrajetTile from "./subs/TrajetTile";
+import React from 'react';
+import ReducTile from "./subs/ReducTile";
+const ethers = require("ethers");
+export default class Profile extends React.Component {
 
-export default function Profile () {
-    const [data, updateData] = useState([]);
-    const [dataFetched, updateFetched] = useState(false);
-    const [address, updateAddress] = useState("0x");
-    const [totalPrice, updateTotalPrice] = useState("0");
+    constructor(props) {
+        super(props);
+        this.initialState = {
+            data: [],
+            dataFetched: false,
+            address: '0x',
+            balance: 0,
+            provider : null,
+            signer: null
+        };
+        this.state = this.initialState;
+    }
 
-    async function getNFTData(tokenId) {
-        const ethers = require("ethers");
-        let sumPrice = 0;
-        //After adding your Hardhat network to your metamask, this code will get providers and signers
+    componentDidMount() {
+        this.initialize();
+    }
+
+
+    async initialize() {
         const provider = new ethers.providers.Web3Provider(window.ethereum);
-        const signer = provider.getSigner();
+        const signer = await provider.getSigner();
         const addr = await signer.getAddress();
-
-        //Pull the deployed contract instance
-        let contract = new ethers.Contract(MarketplaceJSON.address, MarketplaceJSON.abi, signer)
-
-        //create an NFT Token
-        let transaction = await contract.getMyNFTs()
-
-        /*
-        * Below function takes the metadata from tokenURI and the data returned by getMyNFTs() contract function
-        * and creates an object of information that is to be displayed
-        */
+        this.setState({
+            address: addr,
+            provider: provider,
+            signer: signer
+        }, this.getValues);
         
+    }
+
+    getValues() {
+        this.getBalance();
+        if(!this.state.dataFetched) {
+            this.getNFTData('');
+        }
+    }
+
+    async getBalance() {
+        const token = new ethers.Contract(
+            ContractAddressJSON.Token,
+            TokenJSON.abi,
+            this.state.provider.getSigner(0)
+          );
+          const balance = await token.balanceOf(this.state.address);
+          this.setState({
+            balance: balance
+          });
+    } 
+
+    async getNFTData(tokenId) {
+        let contract = new ethers.Contract(NFTRailRoadShopJSON.address, NFTRailRoadShopJSON.abi, this.state.signer);
+        let transaction = await contract.getMyNFTs();
         const items = await Promise.all(transaction.map(async i => {
             const tokenURI = await contract.tokenURI(i.tokenId);
-            let meta = await axios.get(tokenURI);
-            meta = meta.data;
-
+            let meta = await new Promise((resolve) => fetch(tokenURI).then(res => res.json()).then(res => resolve(res)));
             let price = ethers.utils.formatUnits(i.price.toString(), 'ether');
             let item = {
                 price,
+                meta: meta,
                 tokenId: i.tokenId.toNumber(),
                 seller: i.seller,
                 owner: i.owner,
-                image: meta.image,
-                name: meta.name,
-                description: meta.description,
             }
-            sumPrice += Number(price);
             return item;
-        }))
-
-        updateData(items);
-        updateFetched(true);
-        updateAddress(addr);
-        updateTotalPrice(sumPrice.toPrecision(3));
+        }));
+        this.setState({
+            data: items,
+            dataFetched: true
+        });
     }
 
-    const params = useParams();
-    const tokenId = params.tokenId;
-    if(!dataFetched)
-        getNFTData(tokenId);
 
+    getReducCard() {
+        return this.state.data.filter(el => el.meta.type === 'REDUC');
+    }
+
+    getTrajetCard() {
+        return this.state.data.filter(el => el.meta.type === 'TRAJET');
+    }
+
+   render() {
     return (
-        <div className="profileClass" style={{"min-height":"100vh"}}>
+        <div className="profileClass">
             <Navbar></Navbar>
-            <div className="profileClass">
-            <div className="flex text-center flex-col mt-11 md:text-2xl text-white">
-                <div className="mb-5">
-                    <h2 className="font-bold">Wallet Address</h2>  
-                    {address}
+            <main className="container pt-5">
+                <h2 className="pb-4 border-bottom">Retrouvez ici toutes les informations sur votre compte</h2>
+                <div className="accordion pt-3" id="accordionData">
+                    <div className="accordion-item">
+                        <h2 className="accordion-header" id="headingOne">
+                            <button className="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                                Données de votre wallet
+                            </button>
+                        </h2>
+                        <div id="collapseOne" className="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#accordionData">
+                            <div className="accordion-body">
+                                <p>
+                                    <strong>Adresse de votre wallet</strong>
+                                    <input type="text" className="form-control" readOnly='readonly' value={this.state.address}/>
+                                </p>
+                                <p>
+                                    <strong>Argent présent dans votre wallet </strong>
+                                    <input type="text" className="form-control" readOnly='readonly' value={this.state.balance} />
+                                </p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <div className="flex flex-row text-center justify-center mt-10 md:text-2xl text-white">
-                    <div>
-                        <h2 className="font-bold">No. of NFTs</h2>
-                        {data.length}
-                    </div>
-                    <div className="ml-20">
-                        <h2 className="font-bold">Total Value</h2>
-                        {totalPrice} ETH
-                    </div>
-            </div>
-            <div className="flex flex-col text-center items-center mt-11 text-white">
-                <h2 className="font-bold">Your NFTs</h2>
+                <div className="pt-4">
+                <h4 className="font-bold">Vos achats ({this.state.data.length}) : </h4>
                 <div className="flex justify-center flex-wrap max-w-screen-xl">
-                    {data.map((value, index) => {
-                    return <NFTTile data={value} key={index}></NFTTile>;
+                    <div className="mt-4">
+                    <h6>Vos cartes de fidélitées : </h6>
+                    {this.getReducCard().map((value, index) => {
+                    return <ReducTile data={value} key={index}></ReducTile>;
                     })}
+                    </div>
+                    <div className="mt-4">
+                    <h6>Vos billets : </h6>
+                    {this.getTrajetCard().map((value, index) => {
+                    return <TrajetTile data={value} key={index}></TrajetTile>;
+                    })}
+                    </div>
                 </div>
                 <div className="mt-10 text-xl">
-                    {data.length == 0 ? "Oops, No NFT data to display (Are you logged in?)":""}
+                    {this.state.data.length == 0 ? "Vous n'avez pas encore éffectué d'achat":""}
                 </div>
             </div>
-            </div>
+            </main>
         </div>
     )
-};
+   }
+    
+}
