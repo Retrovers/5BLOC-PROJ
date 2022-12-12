@@ -13,6 +13,7 @@ export default function ReducTile (data) {
                 <h5 className="card-title">Carte de réduction</h5>
                 <p className="card-text"><strong>{data.data.meta.reduction}</strong> % de reduction</p>
                 {data.moreInfo === true ? <Link to={urlFinal} className="btn btn-primary">Plus d'information</Link> : null}
+                {data.canBeTransfer === true ? <button onClick={data.onTransferStart} className="btn btn-danger">Transfer a un autre wallet</button> : null}
             </div>
         </div>
     )

@@ -79,6 +79,9 @@ export default class Profile extends React.Component {
         });
     }
 
+    async transferPrivilegeCard(param) {
+        console.log(param)
+    }
 
     getReducCard() {
         return this.state.data.filter(el => el.meta.type === 'REDUC');
@@ -117,11 +120,15 @@ export default class Profile extends React.Component {
                 </div>
                 <div className="pt-4">
                 <h4 className="font-bold">Vos achats ({this.state.data.length}) : </h4>
-                <div className="flex justify-center flex-wrap max-w-screen-xl">
+                <div className="mt-10 text-xl">
+                    {this.state.data.length == 0 ? 
+                    "Vous n'avez pas encore éffectué d'achat"
+                    :
+                    <div className="flex justify-center flex-wrap max-w-screen-xl">
                     <div className="mt-4">
                     <h6>Vos cartes de fidélitées : </h6>
                     {this.getReducCard().map((value, index) => {
-                    return <ReducTile data={value} key={index}></ReducTile>;
+                    return <ReducTile data={value} key={index} canBeTransfer={true} onTransferStart={this.transferPrivilegeCard.bind(this, value)}></ReducTile>;
                     })}
                     </div>
                     <div className="mt-4">
@@ -131,8 +138,7 @@ export default class Profile extends React.Component {
                     })}
                     </div>
                 </div>
-                <div className="mt-10 text-xl">
-                    {this.state.data.length == 0 ? "Vous n'avez pas encore éffectué d'achat":""}
+                    }
                 </div>
             </div>
             </main>

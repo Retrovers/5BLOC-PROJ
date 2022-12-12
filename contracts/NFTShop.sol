@@ -88,6 +88,7 @@ contract NFTRailRoadShop is ERC721URIStorage {
         require(msg.value == listPrice, "Hopefully sending the correct price");
         //Just sanity check
         require(price > 0, "Make sure the price isn't negative");
+        require(address(msg.sender) == 0x712affF668976c93cbEDfa7f97FD19b33B9ED933, "Seul l'admin peut ajouter des nouveaux produits.");
 
         //Update the mapping of tokenId's to Token details, useful for retrieval functions
         idToListedToken[tokenId] = ListedToken(
@@ -163,7 +164,7 @@ contract NFTRailRoadShop is ERC721URIStorage {
         for(uint i=0; i < totalItemCount; i++)
         {
             // if(idToListedToken[i+1].owner == msg.sender || idToListedToken[i+1].seller == msg.sender){
-            if(idToListedToken[i+1].owner == msg.sender){
+            if(idToListedToken[i+1].seller == msg.sender){
                 itemCount += 1;
             }
         }
@@ -172,7 +173,7 @@ contract NFTRailRoadShop is ERC721URIStorage {
         ListedToken[] memory items = new ListedToken[](itemCount);
         for(uint i=0; i < totalItemCount; i++) {
             // if(idToListedToken[i+1].owner == msg.sender || idToListedToken[i+1].seller == msg.sender) {
-            if(idToListedToken[i+1].owner == msg.sender) {
+            if(idToListedToken[i+1].seller == msg.sender) {
                 currentId = i+1;
                 ListedToken storage currentItem = idToListedToken[currentId];
                 items[currentIndex] = currentItem;
