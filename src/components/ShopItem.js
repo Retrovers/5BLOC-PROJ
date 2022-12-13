@@ -79,7 +79,7 @@ export default class ShopItem extends React.Component {
             window.location.replace("/");
         }
         catch (e) {
-            alert("Upload Error" + e)
+            alert("buy error : " + e)
         }
     }
 

@@ -52,7 +52,6 @@ export default class Shop extends React.Component {
         
         //Fetch all the details of every NFT from the contract and display
         const items = await Promise.all(transaction.map(async i => {
-            console.log(i)
             const tokenURI = await contract.tokenURI(i.tokenId);
             let meta = await new Promise((resolve) => fetch(tokenURI).then(res => res.json()).then(res => resolve(res)));
             let price = ethers.utils.formatUnits(i.price.toString(), 'ether');

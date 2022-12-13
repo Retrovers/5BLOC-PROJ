@@ -113,45 +113,27 @@ contract NFTRailRoadShop is ERC721URIStorage {
     //This will return all the NFTs currently listed to be sold on the marketplace
     function getAllNFTs() public view returns (ListedToken[] memory) {
         uint nftCount = _tokenIds.current();
-        ListedToken[] memory tokens = new ListedToken[](nftCount);
+        uint itemCount = 0;
         uint currentIndex = 0;
         uint currentId;
-        //at the moment currentlyListed is true for all, if it becomes false in the future we will 
-        //filter out currentlyListed == false over here
-        for(uint i=0;i<nftCount;i++)
-        {
-            currentId = i + 1;
-            ListedToken storage currentItem = idToListedToken[currentId];
-            tokens[currentIndex] = currentItem;
-            currentIndex += 1;
+        
+         for(uint i=0; i < nftCount; i++) {
+            if(idToListedToken[i+1].currentlyListed == true){
+                itemCount += 1;
+            }
         }
-        //the array 'tokens' has the list of all NFTs in the marketplace
-        return tokens;
-        // uint nftCount = _tokenIds.current();
-        // uint itemCount = 0;
-        // uint currentIndex = 0;
-        // uint currentId;
-        
-        // for(uint i=0; i < nftCount; i++)
-        // {
-        //     // if(idToListedToken[i+1].owner == msg.sender || idToListedToken[i+1].seller == msg.sender){
-        //     if(idToListedToken[i+1].currentlyListed == true){
-        //         itemCount += 1;
-        //     }
-        // }
 
-        // ListedToken[] memory tokens = new ListedToken[](nftCount);
-        // for(uint i=0; i < itemCount; i++) {
-        //     // if(idToListedToken[i+1].owner == msg.sender || idToListedToken[i+1].seller == msg.sender) {
-        //     if(idToListedToken[i+1].currentlyListed == true) {
-        //         currentId = i+1;
-        //         ListedToken storage currentItem = idToListedToken[currentId];
-        //         tokens[currentIndex] = currentItem;
-        //         currentIndex += 1;
-        //     }
-        // }
+        ListedToken[] memory tokens = new ListedToken[](itemCount);
+        for(uint i=0; i < nftCount; i++) {
+            if(idToListedToken[i+1].currentlyListed == true) {
+                currentId = i+1;
+                ListedToken storage currentItem = idToListedToken[currentId];
+                tokens[currentIndex] = currentItem;
+                currentIndex += 1;
+            }
+        }
         
-        // return tokens;
+        return tokens; 
     }
     
     //Returns all the NFTs that the current user is owner or seller in
@@ -164,7 +146,7 @@ contract NFTRailRoadShop is ERC721URIStorage {
         for(uint i=0; i < totalItemCount; i++)
         {
             // if(idToListedToken[i+1].owner == msg.sender || idToListedToken[i+1].seller == msg.sender){
-            if(idToListedToken[i+1].seller == msg.sender){
+            if(idToListedToken[i+1].owner == msg.sender){
                 itemCount += 1;
             }
         }
@@ -173,7 +155,7 @@ contract NFTRailRoadShop is ERC721URIStorage {
         ListedToken[] memory items = new ListedToken[](itemCount);
         for(uint i=0; i < totalItemCount; i++) {
             // if(idToListedToken[i+1].owner == msg.sender || idToListedToken[i+1].seller == msg.sender) {
-            if(idToListedToken[i+1].seller == msg.sender) {
+            if(idToListedToken[i+1].owner == msg.sender) {
                 currentId = i+1;
                 ListedToken storage currentItem = idToListedToken[currentId];
                 items[currentIndex] = currentItem;
@@ -183,6 +165,7 @@ contract NFTRailRoadShop is ERC721URIStorage {
         return items;
     }
 
+
     function executeSale(uint256 tokenId) public payable {
         uint price = idToListedToken[tokenId].price;
         address seller = idToListedToken[tokenId].seller;
@@ -190,6 +173,7 @@ contract NFTRailRoadShop is ERC721URIStorage {
 
         idToListedToken[tokenId].currentlyListed = false;
         idToListedToken[tokenId].seller = payable(msg.sender);
+        idToListedToken[tokenId].owner = payable(msg.sender);
         _itemsSold.increment();
 
         _transfer(address(this), msg.sender, tokenId);
@@ -197,5 +181,23 @@ contract NFTRailRoadShop is ERC721URIStorage {
 
         payable(owner).transfer(listPrice);
         payable(seller).transfer(msg.value);
+    }
+
+    function transferCard(address to, uint256 tokenId) public payable {
+        require(idToListedToken[tokenId].owner == msg.sender, "Vous devez etre proprio pour transferer une carte");
+
+        console.log(
+                "transfer de %s a %s",
+                msg.sender,
+                to
+            );
+
+        idToListedToken[tokenId].owner = payable(to);
+        idToListedToken[tokenId].seller = payable(to);
+
+         _transfer(msg.sender, to, tokenId);
+        approve(msg.sender, tokenId);
+
+        payable(owner).transfer(listPrice);
     }
 }
