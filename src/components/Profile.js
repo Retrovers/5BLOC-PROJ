@@ -32,6 +32,7 @@ export default class Profile extends React.Component {
         const provider = new ethers.providers.Web3Provider(window.ethereum);
         const signer = await provider.getSigner();
         const addr = await signer.getAddress();
+        if (addr === "0x") window.location('/');
         this.setState({
             address: addr,
             provider: provider,
